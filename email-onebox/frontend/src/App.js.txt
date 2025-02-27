@@ -1,0 +1,26 @@
+import React, { useState, useEffect } from "react";
+
+function App() {
+  const [emails, setEmails] = useState([]);
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    fetch("http://localhost:8000/search?query=" + query)
+      .then((res) => res.json())
+      .then((data) => setEmails(data));
+  }, [query]);
+
+  return (
+    <div>
+      <h1>Email Onebox</h1>
+      <input type="text" placeholder="Search emails..." onChange={(e) => setQuery(e.target.value)} />
+      <ul>
+        {emails.map((email, index) => (
+          <li key={index}>{email._source.subject}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default App;
