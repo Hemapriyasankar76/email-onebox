@@ -1,0 +1,8 @@
+from transformers import pipeline
+
+classifier = pipeline("text-classification", model="distilbert-base-uncased")
+
+def categorize_email(email_body):
+    categories = ["Interested", "Meeting Booked", "Not Interested", "Spam", "Out of Office"]
+    result = classifier(email_body)
+    return categories[result[0]["label"]]
