@@ -1,0 +1,35 @@
+from fastapi import FastAPI, BackgroundTasks
+from email_sync import fetch_emails
+from ai_categorization import categorize_email
+from webhook import send_webhook
+from elasticsearch import Elasticsearch
+import requests
+
+app = FastAPI()
+ES = Elasticsearch(["http://localhost:9200"])
+SLACK_WEBHOOK = "https://hooks.slack.com/services/..."
+WEBHOOK_URL = "https://webhook.site/..."
+
+@app.get("/sync")
+def sync_emails(background_tasks: BackgroundTasks):
+    background_tasks.add_task(fetch_emails)
+    return {"message": "Email sync started"}
+
+@app.get("/search")
+def search_emails(query: str):
+    result = ES.search(index="emails", body={"query": {"match": {"body": query}}})
+    return result["hits"]["hits"]
+
+@app.post("/categorize")
+def categorize(email_body: str):
+    category = categorize_email(email_body)
+    return {"category": category}
+
+@app.post("/webhook")
+def trigger_webhook(email_body: str):
+    send_webhook(email_body)
+    return {"message": "Webhook triggered"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
