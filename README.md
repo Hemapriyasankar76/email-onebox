@@ -27,9 +27,29 @@ Email Onebox is a **real-time email aggregator** that synchronizes multiple IMAP
 
 ---
 
-## 🔧 Setup Instructions
+## 🔧 Setup Instructions 
+2️⃣ Backend Setup (FastAPI)
+sh
+Copy
+Edit
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-### **1️⃣ Clone the Repository**
-```sh
-git clone https://github.com/YOUR_GITHUB_USERNAME/email-onebox.git
-cd email-onebox
+# Install dependencies
+pip install -r requirements.txt
+
+# Run FastAPI server
+uvicorn main:app --reload
+3️⃣ Frontend Setup (React)
+sh
+Copy
+Edit
+cd frontend
+npm install
+npm start
+4️⃣ Run Elasticsearch (Docker)
+sh
+Copy
+Edit
+docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:7.10.1
