@@ -1,0 +1,41 @@
+import imaplib
+import email
+from email.header import decode_header
+from elasticsearch import Elasticsearch
+import requests
+
+IMAP_SERVER = "imap.gmail.com"
+EMAIL_ACCOUNT = "your_email@gmail.com"
+PASSWORD = "your_password"
+SLACK_WEBHOOK = "https://hooks.slack.com/services/..."
+WEBHOOK_URL = "https://webhook.site/..."
+ES = Elasticsearch(["http://localhost:9200"])
+
+def fetch_emails():
+    mail = imaplib.IMAP4_SSL(IMAP_SERVER)
+    mail.login(EMAIL_ACCOUNT, PASSWORD)
+    mail.select("inbox")
+    _, messages = mail.search(None, "ALL")
+    for num in messages[0].split():
+        _, msg_data = mail.fetch(num, "(RFC822)")
+        for response_part in msg_data:
+            if isinstance(response_part, tuple):
+                msg = email.message_from_bytes(response_part[1])
+                subject, encoding = decode_header(msg["Subject"])[0]
+                subject = subject.decode(encoding) if encoding else subject
+                sender = msg.get("From")
+                body = ""
+                if msg.is_multipart():
+                    for part in msg.walk():
+                        if part.get_content_type() == "text/plain":
+                            body = part.get_payload(decode=True).decode("utf-8")
+                else:
+                    body = msg.get_payload(decode=True).decode("utf-8")
+                
+                email_data = {"subject": subject, "sender": sender, "body": body}
+                ES.index(index="emails", body=email_data)
+                
+                if "Interested" in subject:
+                    requests.post(SLACK_WEBHOOK, json={"text": f"New Interested Email: {subject}"})
+                    requests.post(WEBHOOK_URL, json=email_data)
+    mail.logout()
